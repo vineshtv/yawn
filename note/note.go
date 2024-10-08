@@ -51,6 +51,7 @@ var (
 	saveButtonActiveStyle   = lipgloss.NewStyle().Background(accentColor).Foreground(yellowColor).Padding(0, 2)
 	saveButtonInactiveStyle = lipgloss.NewStyle().Background(darkGrayColor).Foreground(lightGrayColor).Padding(0, 2)
 	saveButtonStyle         = lipgloss.NewStyle().Background(darkGrayColor).Foreground(grayColor).Padding(0, 2)
+	helpStyle               = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 )
 
 func (m *noteModel) focusActiveInput() {
@@ -138,6 +139,7 @@ func (m noteModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			if m.state == onSave {
 				m.state = committingSave
+				return m, tea.Quit
 			}
 		}
 	}
@@ -169,7 +171,7 @@ func (m noteModel) View() string {
 	default:
 		s.WriteString(saveButtonInactiveStyle.Render("Save Note"))
 	}
-	s.WriteString("\nPress ctrl+c to quit.\n")
+	s.WriteString(helpStyle.Render("\n\ntab: focus next • ctrl+c: exit\n"))
 
 	return lipgloss.NewStyle().Padding(1).Render(s.String())
 }
