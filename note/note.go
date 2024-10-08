@@ -15,6 +15,8 @@ type State int
 const (
 	editingName State = iota
 	editingBody
+	onSave
+	committingSave
 )
 
 type noteModel struct {
@@ -52,6 +54,10 @@ var (
 )
 
 func (m *noteModel) focusActiveInput() {
+	// Reset the text input styles
+	m.Name.PromptStyle = labelStyle
+	m.Name.TextStyle = textStyle
+
 	switch m.state {
 	case editingName:
 		m.Name.PromptStyle = activeLabelStyle
@@ -124,11 +130,19 @@ func (m noteModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.state = editingBody
 				m.Body.Focus()
 			case editingBody:
+				m.state = onSave
+			case onSave:
 				m.state = editingName
 				m.Name.Focus()
 			}
+		case "enter":
+			if m.state == onSave {
+				m.state = committingSave
+			}
 		}
 	}
+
+	m.focusActiveInput()
 
 	// Update the actual fields with the new value
 	var cmd tea.Cmd
@@ -146,7 +160,15 @@ func (m noteModel) View() string {
 	s.WriteString("\n\n")
 	s.WriteString(m.Body.View())
 	s.WriteString("\n\n")
-	s.WriteString(saveButtonStyle.Render("Save Note"))
+
+	switch m.state {
+	case onSave:
+		s.WriteString(saveButtonActiveStyle.Render("Save Note"))
+	case committingSave:
+		s.WriteString(saveButtonActiveStyle.Render("Save Note"))
+	default:
+		s.WriteString(saveButtonInactiveStyle.Render("Save Note"))
+	}
 	s.WriteString("\nPress ctrl+c to quit.\n")
 
 	return lipgloss.NewStyle().Padding(1).Render(s.String())
