@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -28,6 +29,7 @@ type noteModel struct {
 	// Something to do with help. TODO: implement.
 	help help.Model
 
+	savingSpinner spinner.Model
 	// State indicates the current state of this new Note.
 	state State
 }
@@ -95,16 +97,29 @@ func AddNewNoteModel() noteModel {
 	body.CharLimit = 4000
 	body.SetWidth(80)
 
+	savingSpinner := spinner.New()
+	savingSpinner.Style = activeLabelStyle
+	savingSpinner.Spinner = spinner.Dot
+
 	m := noteModel{
-		Name:  name,
-		Body:  body,
-		help:  help.New(),
-		state: editingName,
+		Name:          name,
+		Body:          body,
+		help:          help.New(),
+		savingSpinner: savingSpinner,
+		state:         editingName,
 	}
 
 	m.focusActiveInput()
 
 	return m
+}
+
+type savingNoteSuccss struct{}
+
+func (m *noteModel) saveNote() tea.Cmd {
+	return func() tea.Msg {
+		return savingNoteSuccss{}
+	}
 }
 
 // Init BubbleTea init method.
@@ -120,6 +135,8 @@ func (m *noteModel) blurInputs() {
 // Update BubbleTea update method.
 func (m noteModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case savingNoteSuccss:
+		return m, tea.Quit
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
@@ -139,7 +156,10 @@ func (m noteModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			if m.state == onSave {
 				m.state = committingSave
-				return m, tea.Quit
+				return m, tea.Batch(
+					m.savingSpinner.Tick,
+					m.saveNote(),
+				)
 			}
 		}
 	}
@@ -147,15 +167,25 @@ func (m noteModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.focusActiveInput()
 
 	// Update the actual fields with the new value
+	var cmds []tea.Cmd
 	var cmd tea.Cmd
 	m.Name, cmd = m.Name.Update(msg)
 	m.Body, cmd = m.Body.Update(msg)
-	_ = cmd
+	// _ = cmd
 
-	return m, nil
+	switch m.state {
+	case committingSave:
+		m.savingSpinner, cmd = m.savingSpinner.Update(msg)
+		cmds = append(cmds, cmd)
+	}
+	return m, tea.Batch(cmds...)
 }
 
 func (m noteModel) View() string {
+	switch m.state {
+	case committingSave:
+		return "\n " + m.savingSpinner.View() + "Saving Note"
+	}
 	var s strings.Builder
 
 	s.WriteString(m.Name.View())

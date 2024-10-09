@@ -18,7 +18,6 @@ var newCmd = &cobra.Command{
 }
 
 func addNote(cmd *cobra.Command, args []string) {
-	fmt.Println("Adding a new note")
 	p := tea.NewProgram(note.AddNewNoteModel())
 
 	m, err := p.Run()
