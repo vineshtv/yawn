@@ -18,6 +18,7 @@ const (
 	editingBody
 	onSave
 	committingSave
+	saveSuccess
 )
 
 type noteModel struct {
@@ -136,6 +137,7 @@ func (m *noteModel) blurInputs() {
 func (m noteModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case savingNoteSuccss:
+		m.state = saveSuccess
 		return m, tea.Quit
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -185,6 +187,8 @@ func (m noteModel) View() string {
 	switch m.state {
 	case committingSave:
 		return "\n " + m.savingSpinner.View() + "Saving Note"
+	case saveSuccess:
+		return "\n Note saved.\n"
 	}
 	var s strings.Builder
 
