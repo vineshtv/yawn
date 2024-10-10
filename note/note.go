@@ -55,6 +55,7 @@ var (
 	saveButtonInactiveStyle = lipgloss.NewStyle().Background(darkGrayColor).Foreground(lightGrayColor).Padding(0, 2)
 	saveButtonStyle         = lipgloss.NewStyle().Background(darkGrayColor).Foreground(grayColor).Padding(0, 2)
 	helpStyle               = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
+	yawnstyle               = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.AdaptiveColor{Light: "236", Dark: "248"})
 )
 
 func (m *noteModel) focusActiveInput() {
@@ -188,7 +189,8 @@ func (m noteModel) View() string {
 	case committingSave:
 		return "\n " + m.savingSpinner.View() + "Saving Note"
 	case saveSuccess:
-		return "\n Note saved.\n"
+		// return "Note saved... yawn ᶻ 𝗓 𐰁\n"
+		return yawnstyle.Render("Note Saved. yawn ᶻ 𝗓 𐰁\n")
 	}
 	var s strings.Builder
 
