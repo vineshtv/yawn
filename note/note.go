@@ -1,6 +1,7 @@
 package note
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -35,6 +36,11 @@ type noteModel struct {
 	savingSpinner spinner.Model
 	// State indicates the current state of this new Note.
 	state State
+}
+
+type noteSaveModel struct {
+	Name string
+	Body string
 }
 
 const (
@@ -148,7 +154,12 @@ func (m *noteModel) saveNote() tea.Cmd {
 		}
 		defer file.Close()
 
-		_, err = file.WriteString(fmt.Sprintf("Name: %s\n\nBody: %s\n", noteName, noteBody))
+		m1 := noteSaveModel{
+			Name: noteName,
+			Body: noteBody,
+		}
+		encoder := json.NewEncoder(file)
+		err = encoder.Encode(m1)
 		if err != nil {
 			// TODO: Handle error
 			_ = err
