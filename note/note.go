@@ -1,6 +1,8 @@
 package note
 
 import (
+	"fmt"
+	"os"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -120,6 +122,38 @@ type savingNoteSuccss struct{}
 
 func (m *noteModel) saveNote() tea.Cmd {
 	return func() tea.Msg {
+		// Make this a config variable.
+		dirname := "Notes"
+		if _, err := os.Stat(dirname); os.IsNotExist(err) {
+			// dir does not exist. Create it.
+			err := os.Mkdir(dirname, 0755)
+			if err != nil {
+				// TODO: DO something here. Possibly return an error type to the update function.
+				_ = err
+			}
+		}
+
+		// Save the contents of the note
+		noteName := m.Name.Value()
+		noteBody := m.Body.Value()
+
+		// TODO: Generate a filename by removing special characters from the note name.
+		filename := noteName
+		noteFullPath := fmt.Sprintf("%s/%s", dirname, filename)
+		// TODO: Check if file exists and handle
+		file, err := os.Create(noteFullPath)
+		if err != nil {
+			// TODO : handle error.
+			_ = err
+		}
+		defer file.Close()
+
+		_, err = file.WriteString(fmt.Sprintf("Name: %s\n\nBody: %s\n", noteName, noteBody))
+		if err != nil {
+			// TODO: Handle error
+			_ = err
+		}
+
 		return savingNoteSuccss{}
 	}
 }
@@ -187,7 +221,7 @@ func (m noteModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m noteModel) View() string {
 	switch m.state {
 	case committingSave:
-		return "\n " + m.savingSpinner.View() + "Saving Note"
+		return m.savingSpinner.View() + "Saving Note"
 	case saveSuccess:
 		// return "Note saved... yawn ᶻ 𝗓 𐰁\n"
 		return yawnstyle.Render("Note Saved. yawn ᶻ 𝗓 𐰁\n")
