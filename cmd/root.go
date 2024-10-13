@@ -68,6 +68,7 @@ func initConfig() {
 
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
+		fmt.Println(viper.GetString("general.noteLocation"))
 	} else {
 		fmt.Println("Error reading config file:", err)
 	}

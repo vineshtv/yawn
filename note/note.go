@@ -38,7 +38,7 @@ type noteModel struct {
 	state State
 }
 
-type noteSaveModel struct {
+type NoteSaveModel struct {
 	Name string
 	Body string
 }
@@ -154,7 +154,7 @@ func (m *noteModel) saveNote() tea.Cmd {
 		}
 		defer file.Close()
 
-		m1 := noteSaveModel{
+		m1 := NoteSaveModel{
 			Name: noteName,
 			Body: noteBody,
 		}
