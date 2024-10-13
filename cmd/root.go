@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/vineshtv/yawn/config"
 )
 
 var (
@@ -64,12 +65,15 @@ func initConfig() {
 		viper.SetConfigName(".yawn")
 	}
 
-	viper.AutomaticEnv()
-
+	// viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
-		fmt.Println(viper.GetString("general.noteLocation"))
+		err := viper.Unmarshal(&config.Config)
+		if err != nil {
+			fmt.Println("Error processing config file:", viper.ConfigFileUsed())
+			os.Exit(1)
+		}
 	} else {
 		fmt.Println("Error reading config file:", err)
+		os.Exit(1)
 	}
 }
