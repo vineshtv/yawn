@@ -1,18 +1,15 @@
 package cmd
 
 import (
-	// "bytes"
 	"encoding/json"
 	"fmt"
-
-	// "io"
 	"os"
 	"os/exec"
-
-	// "strings"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
+	"github.com/vineshtv/yawn/config"
 	"github.com/vineshtv/yawn/note"
 )
 
@@ -25,70 +22,59 @@ var findCmd = &cobra.Command{
 	Run: findNote,
 }
 
-func runsearch() (string, error) {
+func runSearch(dirName string) (string, error) {
+	// TODO: Move this to a utils folder and support other OSes
 	cmd := exec.Command("fzf")
+	cmd.Dir = dirName
 	cmd.Stdin = os.Stdin
-	cmd.Dir = "/Users/vineshtv/pancake/YAWN/yawn/Notes"
 
 	output, err := cmd.Output()
 	if err != nil {
-		fmt.Println("fzf failed - ", err)
+		fmt.Println("fzf failed -", err)
 		return "", err
 	}
 
-	return string(output), err
+	// There probably is a better way to do this.
+	filename := fmt.Sprintf("%s/%s", dirName, strings.TrimSuffix(string(output), "\n"))
+	return filename, err
 }
 
+// findNote1 Finds an existing note based on just the note name.
 func findNote(cmd *cobra.Command, args []string) {
-	foundNote := note.AddNewNoteModel()
-	// foundNote.Name.SetValue("This note")
-	// foundNote.Body.SetValue("This is the body of the note.")
-
-	noteName, err := runsearch()
+	dirname := config.Config.General.NoteLocation
+	noteName, err := runSearch(dirname)
 	if err != nil {
-		// TODO: Print an error.
-		return
+		fmt.Println("Error searching note: ", err)
+		os.Exit(1)
 	}
 
-	dirname := "/Users/vineshtv/pancake/YAWN/yawn/Notes"
-	if _, err = os.Stat(dirname); os.IsNotExist(err) {
-		fmt.Println("error - ", err)
-	} else {
-		fmt.Println("Directory exists")
-	}
-	notefullPath := fmt.Sprintf("%s/%s", dirname, noteName)
-	notefullPath = "/Users/vineshtv/pancake/YAWN/yawn/Notes/vineshnote"
-
-	if _, err = os.Stat(notefullPath); err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(os.Getwd())
-	fmt.Println("Opening - ", notefullPath)
-	file, err := os.Open(notefullPath)
+	fd, err := os.Open(noteName)
 	if err != nil {
-		// TODO: print errork
-		fmt.Println("Error opening note - ", err)
-		return
+		fmt.Println("Error reading note:", err)
+		os.Exit(1)
 	}
-	defer file.Close()
+	defer fd.Close()
 
 	m1 := note.NoteSaveModel{}
-	decoder := json.NewDecoder(file)
+	decoder := json.NewDecoder(fd)
 	err = decoder.Decode(&m1)
 	if err != nil {
-		fmt.Println("Error decoding note - ", err)
-		return
+		fmt.Println("Error decoding note: ", err)
+		os.Exit(1)
 	}
+
+	// Create a new Notemodel to viaualize
+	foundNote := note.AddNewNoteModel()
 	foundNote.Name.SetValue(m1.Name)
 	foundNote.Body.SetValue(m1.Body)
 
-	fmt.Println(file)
+	// run the tea program
 	p := tea.NewProgram(foundNote)
 	m, err := p.Run()
 	if err != nil {
-		fmt.Printf("Yawn broke -- %v", err)
+		fmt.Println("Yawn broke: ", err)
+		os.Exit(1)
 	}
-
 	_ = m
 }
 
