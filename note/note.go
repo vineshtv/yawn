@@ -12,6 +12,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/vineshtv/yawn/config"
 )
 
 type State int
@@ -128,14 +129,15 @@ type savingNoteSuccss struct{}
 
 func (m *noteModel) saveNote() tea.Cmd {
 	return func() tea.Msg {
-		// Make this a config variable.
-		dirname := "Notes"
+		// So we need to save the note here
+		// get the notes location from config
+		dirname := config.Config.General.NoteLocation
 		if _, err := os.Stat(dirname); os.IsNotExist(err) {
-			// dir does not exist. Create it.
-			err := os.Mkdir(dirname, 0755)
+			// notes location does not exist. Create it
+			err := os.MkdirAll(dirname, 0755)
 			if err != nil {
-				// TODO: DO something here. Possibly return an error type to the update function.
-				_ = err
+				fmt.Println("Error creating notes directory - ", err)
+				os.Exit(1)
 			}
 		}
 
@@ -143,28 +145,27 @@ func (m *noteModel) saveNote() tea.Cmd {
 		noteName := m.Name.Value()
 		noteBody := m.Body.Value()
 
-		// TODO: Generate a filename by removing special characters from the note name.
+		// TODO: Sanitize filename
+		// filename := SanitizeFilename(noteName)
 		filename := noteName
 		noteFullPath := fmt.Sprintf("%s/%s", dirname, filename)
-		// TODO: Check if file exists and handle
-		file, err := os.Create(noteFullPath)
+
+		fd, err := os.Create(noteFullPath)
 		if err != nil {
-			// TODO : handle error.
-			_ = err
+			fmt.Println("Error Writing Note: ", err)
+			os.Exit(1)
 		}
-		defer file.Close()
+		defer fd.Close()
 
 		m1 := NoteSaveModel{
 			Name: noteName,
 			Body: noteBody,
 		}
-		encoder := json.NewEncoder(file)
+		encoder := json.NewEncoder(fd)
 		err = encoder.Encode(m1)
 		if err != nil {
-			// TODO: Handle error
-			_ = err
+			fmt.Println("Error Encoding file: ", err)
 		}
-
 		return savingNoteSuccss{}
 	}
 }
