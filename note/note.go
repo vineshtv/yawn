@@ -203,6 +203,7 @@ func (m noteModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.state = editingName
 				m.Name.Focus()
 			}
+			m.focusActiveInput()
 		case "enter":
 			if m.state == onSave {
 				m.state = committingSave
@@ -213,8 +214,6 @@ func (m noteModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	}
-
-	m.focusActiveInput()
 
 	// Update the actual fields with the new value
 	var cmds []tea.Cmd
