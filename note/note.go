@@ -107,6 +107,7 @@ func AddNewNoteModel() noteModel {
 	body.Cursor.Style = cursorStyle
 	body.CharLimit = 4000
 	body.SetWidth(80)
+	body.SetHeight(15)
 
 	savingSpinner := spinner.New()
 	savingSpinner.Style = activeLabelStyle
