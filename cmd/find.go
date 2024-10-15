@@ -24,7 +24,8 @@ var findCmd = &cobra.Command{
 
 func runSearch(dirName string) (string, error) {
 	// TODO: Move this to a utils folder and support other OSes
-	cmd := exec.Command("fzf")
+	cmd := exec.Command("fzf", "--ansi", "--layout=reverse", "--border", "--height=90%", "--cycle")
+	// cmd := exec.Command("fzf --ansi --layout=reverse --border --height=90% --cycle")
 	cmd.Dir = dirName
 	cmd.Stdin = os.Stdin
 
