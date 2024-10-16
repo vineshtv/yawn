@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -37,6 +38,8 @@ type noteModel struct {
 	savingSpinner spinner.Model
 	// State indicates the current state of this new Note.
 	state State
+
+	noteFileName string
 }
 
 type NoteSaveModel struct {
@@ -119,11 +122,28 @@ func AddNewNoteModel() noteModel {
 		help:          help.New(),
 		savingSpinner: savingSpinner,
 		state:         editingName,
+		noteFileName:  sanitizeFileName(name.Value()),
 	}
 
 	m.focusActiveInput()
 
 	return m
+}
+
+func sanitizeFileName(input string) string {
+	re := regexp.MustCompile(`[^a-zA-Z0-9._-]+`)
+	sanitized := re.ReplaceAllString(input, "_")
+	sanitized = strings.Trim(sanitized, "._-")
+
+	if len(sanitized) == 0 {
+		sanitized = "default_filename"
+	}
+
+	if len(sanitized) > 255 {
+		sanitized = sanitized[:255]
+	}
+
+	return sanitized
 }
 
 type savingNoteSuccss struct{}
@@ -146,10 +166,8 @@ func (m *noteModel) saveNote() tea.Cmd {
 		noteName := m.Name.Value()
 		noteBody := m.Body.Value()
 
-		// TODO: Sanitize filename
-		// filename := SanitizeFilename(noteName)
-		filename := noteName
-		noteFullPath := fmt.Sprintf("%s/%s", dirname, filename)
+		m.noteFileName = sanitizeFileName(noteName)
+		noteFullPath := fmt.Sprintf("%s/%s", dirname, m.noteFileName)
 
 		fd, err := os.Create(noteFullPath)
 		if err != nil {
