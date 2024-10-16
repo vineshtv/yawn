@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -68,6 +69,7 @@ func findNote(cmd *cobra.Command, args []string) {
 	foundNote := note.AddNewNoteModel()
 	foundNote.Name.SetValue(m1.Name)
 	foundNote.Body.SetValue(m1.Body)
+	foundNote.NoteFileName = filepath.Base(noteName)
 
 	// run the tea program
 	p := tea.NewProgram(foundNote)

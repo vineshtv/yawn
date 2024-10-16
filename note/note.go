@@ -39,7 +39,7 @@ type noteModel struct {
 	// State indicates the current state of this new Note.
 	state State
 
-	noteFileName string
+	NoteFileName string
 }
 
 type NoteSaveModel struct {
@@ -122,7 +122,7 @@ func AddNewNoteModel() noteModel {
 		help:          help.New(),
 		savingSpinner: savingSpinner,
 		state:         editingName,
-		noteFileName:  sanitizeFileName(name.Value()),
+		NoteFileName:  sanitizeFileName(name.Value()),
 	}
 
 	m.focusActiveInput()
@@ -166,8 +166,23 @@ func (m *noteModel) saveNote() tea.Cmd {
 		noteName := m.Name.Value()
 		noteBody := m.Body.Value()
 
-		m.noteFileName = sanitizeFileName(noteName)
-		noteFullPath := fmt.Sprintf("%s/%s", dirname, m.noteFileName)
+		noteFileName := sanitizeFileName(noteName)
+		noteFullPath := fmt.Sprintf("%s/%s", dirname, noteFileName)
+
+		// if the file name for the note has been modified, then delete the old file first
+		if m.NoteFileName != noteFileName {
+			oldFilePath := fmt.Sprintf("%s/%s", dirname, m.NoteFileName)
+
+			if _, err := os.Stat(oldFilePath); err == nil {
+				err = os.Remove(oldFilePath)
+				if err != nil {
+					fmt.Println("Error deleting old file", err)
+					os.Exit(1)
+
+				}
+			}
+		}
+		m.NoteFileName = noteFileName
 
 		fd, err := os.Create(noteFullPath)
 		if err != nil {
